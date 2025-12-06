@@ -115,7 +115,7 @@ if captured_image is not None:
                 # st.image(laplacian_display)
                 score = laplacian.var()
                 st.write(score)
-                if score < 200:
+                if score < 330:
                     st.write('No depth- Fake QR')
                 else:
                     st.write('Depth detected- Valid QR')
