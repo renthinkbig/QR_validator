@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 from PIL import Image
 from transformers import pipeline
-from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+
 
 @st.cache_resource
 def load_depthanything_model():
@@ -13,36 +13,6 @@ def load_depthanything_model():
     )
     return pipe
 # pipe = pipeline(task="depth-estimation", model="./depthanything-v2")
-
-class QRProcessor(VideoProcessorBase):
-    detected_frames = 0
-    captured = False
-    captured_img = None
-
-    def recv(self, frame):
-        if self.captured:
-            return self.captured_img
-
-        img = frame.to_ndarray(format="bgr24")
-        data, bbox, _ = qr_detector.detectAndDecode(img)
-
-        if bbox is not None:
-            pts = bbox.astype(int).reshape(-1, 2)
-            for i in range(len(pts)):
-                cv2.line(img, tuple(pts[i]), tuple(pts[(i+1)%4]), (0,255,0), 3)
-
-            self.detected_frames += 1
-
-            # Auto-capture after stable detection
-            if self.detected_frames > 10:
-                self.captured = True
-                self.captured_img = frame
-                return frame
-
-        else:
-            self.detected_frames = 0
-
-        return frame.from_ndarray(img, format="bgr24")
 
 def depth_estimation(image):
     depth = pipe(image)["depth"]
@@ -78,18 +48,13 @@ st.title("📸 QR Capture Page")
 st.write("Point your camera at the QR code. Then click **Capture**.")
 
 # Streamlit camera input
-#captured_image = st.camera_input("Camera")
+captured_image = st.camera_input("Camera")
 #captured_image=st.file_uploader('upload image')
-webrtc_streamer(
-    key="qr-camera",
-    video_processor_factory=QRProcessor,
-    media_stream_constraints={"video": True, "audio": False},
-)
+
 pipe= load_depthanything_model()
-if QRProcessor.captured_img is not None:
+if captured_image is not None:
     # Convert to OpenCV format
-    captured_image=QRProcessor.captured_img
-    #img = Image.open(captured_image)
+    img = Image.open(captured_image)
     img = np.array(captured_image)
 
     st.subheader("Captured Image:")
