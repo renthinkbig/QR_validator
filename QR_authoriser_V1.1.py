@@ -58,7 +58,7 @@ if captured_image is not None:
     img = np.array(img)
 
     st.subheader("Captured Image:")
-    #st.image(img, channels="RGB")
+    st.image(img, channels="RGB")
 
     # Save locally
     #cv2.imwrite("captured_qr.png", cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
