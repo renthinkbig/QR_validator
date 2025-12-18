@@ -79,7 +79,7 @@ if captured_image is not None:
             # Crop QR code region
             qr_crop = img[y_min:y_max, x_min:x_max]
             st.image(qr_crop)
-            h, w = img.shape[:2]
+            h, w = qr_crop.shape[:2]
             st.write(h, w)
 
             # Crop central region (say 60-70% of QR code)
@@ -87,7 +87,7 @@ if captured_image is not None:
             cx, cy = w // 2, h // 2
             half_w, half_h = int(w * center_ratio / 2), int(h * center_ratio / 2)
 
-            central_region = img[cy - half_h:cy + half_h, cx - half_w:cx + half_w]
+            central_region = qr_crop[cy - half_h:cy + half_h, cx - half_w:cx + half_w]
 
             # Convert to HSV for better color segmentation
             hsv = cv2.cvtColor(central_region, cv2.COLOR_RGB2HSV)
