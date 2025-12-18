@@ -55,7 +55,7 @@ pipe= load_depthanything_model()
 if captured_image is not None:
     # Convert to OpenCV format
     img = Image.open(captured_image)
-    img = np.array(captured_image)
+    img = np.array(img)
 
     st.subheader("Captured Image:")
     #st.image(img, channels="RGB")
