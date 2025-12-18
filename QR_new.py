@@ -153,8 +153,8 @@ if QRProcessor.captured and QRProcessor.qr_crop is not None:
             else:
                 st.error('No ROI detected')
 
-else:
-            st.error('Failed to detect QR region!!! Recapture the image.')
+#else:
+           # st.error('Failed to detect QR region!!! Recapture the image.')
 
 
 
