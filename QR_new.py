@@ -99,7 +99,7 @@ if QRProcessor.captured and QRProcessor.qr_crop is not None:
     qr_img = QRProcessor.qr_crop
 
     st.subheader("Captured QR Region")
-    st.image(img, channels="BGR")
+    st.image(qr_img, channels="BGR")
 
     # Save locally
     #cv2.imwrite("captured_qr.png", cv2.cvtColor(qr_img, cv2.COLOR_RGB2BGR))
