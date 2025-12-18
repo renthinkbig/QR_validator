@@ -83,7 +83,7 @@ if captured_image is not None:
             st.write(h, w)
 
             # Crop central region (say 60-70% of QR code)
-            center_ratio = 0.7
+            center_ratio = 0.35
             cx, cy = w // 2, h // 2
             half_w, half_h = int(w * center_ratio / 2), int(h * center_ratio / 2)
 
