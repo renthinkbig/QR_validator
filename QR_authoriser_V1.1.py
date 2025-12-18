@@ -78,9 +78,9 @@ if captured_image is not None:
 
             # Crop QR code region
             qr_crop = img[y_min:y_max, x_min:x_max]
-            st.write(qr_crop.size)
             st.image(qr_crop)
             h, w = img.shape[:2]
+            st.write(h, w)
 
             # Crop central region (say 60-70% of QR code)
             center_ratio = 0.7
