@@ -90,7 +90,7 @@ if QRProcessor.captured_img is not None:
     # Convert to OpenCV format
     captured_image=QRProcessor.captured_img
     #img = Image.open(captured_image)
-    img = np.array(img)
+    img = np.array(captured_image)
 
     st.subheader("Captured Image:")
     st.image(img, channels="RGB")
