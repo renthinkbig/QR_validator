@@ -17,7 +17,7 @@ def load_depthanything_model():
     )
     return pipe
 # pipe = pipeline(task="depth-estimation", model="./depthanything-v2")
-
+qr_detector = cv2.QRCodeDetector()
 class QRProcessor(VideoProcessorBase):
     detected_frames = 0
 
