@@ -107,7 +107,7 @@ st.write("Point your camera at the QR code. Then click **Capture**.")
 #captured_image=st.file_uploader('upload image')
 webrtc_streamer(
     key="qr-camera",
-    video_processor_factory=QRProcessor,
+    video_processor_factory=lambda: QRProcessor(),
     media_stream_constraints={"video": True, "audio": False},
 )
 pipe= load_depthanything_model()
