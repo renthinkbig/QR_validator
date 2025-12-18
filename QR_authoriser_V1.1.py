@@ -90,6 +90,7 @@ webrtc_streamer(
 pipe= load_depthanything_model()
 if QRProcessor.captured_img is not None:
     # Convert to OpenCV format
+    captured_image=QRProcessor.captured_img
     img = Image.open(captured_image)
     img = np.array(img)
 
