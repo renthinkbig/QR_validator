@@ -14,35 +14,33 @@ def load_depthanything_model():
     return pipe
 # pipe = pipeline(task="depth-estimation", model="./depthanything-v2")
 
-class QRScanner(VideoProcessorBase):
-    def recv(self, frame):
-        img = frame.to_ndarray(format="bgr24")
+class QRProcessor(VideoProcessorBase):
+    detected_frames = 0
+    captured = False
+    captured_img = None
 
+    def recv(self, frame):
+        if self.captured:
+            return self.captured_img
+
+        img = frame.to_ndarray(format="bgr24")
         data, bbox, _ = qr_detector.detectAndDecode(img)
 
         if bbox is not None:
             pts = bbox.astype(int).reshape(-1, 2)
-
-            # Draw camera-like bounding box
             for i in range(len(pts)):
-                cv2.line(
-                    img,
-                    tuple(pts[i]),
-                    tuple(pts[(i + 1) % len(pts)]),
-                    (0, 255, 0),
-                    3
-                )
+                cv2.line(img, tuple(pts[i]), tuple(pts[(i+1)%4]), (0,255,0), 3)
 
-            if data:
-                cv2.putText(
-                    img,
-                    "QR Detected",
-                    (pts[0][0], pts[0][1] - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8,
-                    (0, 255, 0),
-                    2
-                )
+            self.detected_frames += 1
+
+            # Auto-capture after stable detection
+            if self.detected_frames > 10:
+                self.captured = True
+                self.captured_img = frame
+                return frame
+
+        else:
+            self.detected_frames = 0
 
         return frame.from_ndarray(img, format="bgr24")
 
@@ -84,14 +82,14 @@ st.write("Point your camera at the QR code. Then click **Capture**.")
 #captured_image=st.file_uploader('upload image')
 webrtc_streamer(
     key="qr-camera",
-    video_processor_factory=QRScanner,
+    video_processor_factory=QRProcessor,
     media_stream_constraints={"video": True, "audio": False},
 )
 pipe= load_depthanything_model()
 if QRProcessor.captured_img is not None:
     # Convert to OpenCV format
     captured_image=QRProcessor.captured_img
-    img = Image.open(captured_image)
+    #img = Image.open(captured_image)
     img = np.array(img)
 
     st.subheader("Captured Image:")
