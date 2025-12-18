@@ -4,7 +4,11 @@ import cv2
 from PIL import Image
 from transformers import pipeline
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+if "qr_crop" not in st.session_state:
+    st.session_state.qr_crop = None
 
+if "captured" not in st.session_state:
+    st.session_state.captured = False
 @st.cache_resource
 def load_depthanything_model():
     pipe = pipeline(
@@ -16,38 +20,50 @@ def load_depthanything_model():
 
 class QRProcessor(VideoProcessorBase):
     detected_frames = 0
-    captured = False
-    qr_crop = None
 
     def recv(self, frame):
         img = frame.to_ndarray(format="bgr24")
 
-        if self.captured:
-            # Show frozen QR region only
-            return frame.from_ndarray(self.qr_crop, format="bgr24")
+        # Freeze frame if already captured
+        if st.session_state.captured and st.session_state.qr_crop is not None:
+            return frame.from_ndarray(st.session_state.qr_crop, format="bgr24")
 
         data, bbox, _ = qr_detector.detectAndDecode(img)
 
         if bbox is not None:
             pts = bbox.astype(int).reshape(-1, 2)
 
-            # Draw box
             for i in range(4):
-                cv2.line(img, tuple(pts[i]), tuple(pts[(i+1) % 4]), (0, 255, 0), 2)
+                cv2.line(
+                    img,
+                    tuple(pts[i]),
+                    tuple(pts[(i + 1) % 4]),
+                    (0, 255, 0),
+                    2,
+                )
 
             self.detected_frames += 1
 
             if self.detected_frames > 8:
-                # Crop QR region
                 x_min = pts[:, 0].min()
                 y_min = pts[:, 1].min()
                 x_max = pts[:, 0].max()
                 y_max = pts[:, 1].max()
 
-                self.qr_crop = img[y_min:y_max, x_min:x_max]
-                self.captured = True
+                pad = 10
+                h, w = img.shape[:2]
+                x_min = max(0, x_min - pad)
+                y_min = max(0, y_min - pad)
+                x_max = min(w, x_max + pad)
+                y_max = min(h, y_max + pad)
 
-                return frame.from_ndarray(self.qr_crop, format="bgr24")
+                qr_crop = img[y_min:y_max, x_min:x_max]
+
+                # <<< IMPORTANT: write into session_state
+                st.session_state.qr_crop = qr_crop
+                st.session_state.captured = True
+
+                return frame.from_ndarray(qr_crop, format="bgr24")
         else:
             self.detected_frames = 0
 
@@ -95,15 +111,9 @@ webrtc_streamer(
     media_stream_constraints={"video": True, "audio": False},
 )
 pipe= load_depthanything_model()
-if QRProcessor.captured and QRProcessor.qr_crop is not None:
-    qr_img = QRProcessor.qr_crop
-
+if st.session_state.qr_crop is not None:
     st.subheader("Captured QR Region")
-    st.image(qr_img, channels="BGR")
-
-    # Save locally
-    #cv2.imwrite("captured_qr.png", cv2.cvtColor(qr_img, cv2.COLOR_RGB2BGR))
-    #st.success("Image saved locally as captured_qr.png")
+    st.image(st.session_state.qr_crop, channels="BGR")
 
     if st.button("Upload"):
             # st.image(qr_img)
