@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from PIL import Image
 from transformers import pipeline
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 
 @st.cache_resource
 def load_depthanything_model():
@@ -12,6 +13,38 @@ def load_depthanything_model():
     )
     return pipe
 # pipe = pipeline(task="depth-estimation", model="./depthanything-v2")
+
+class QRScanner(VideoProcessorBase):
+    def recv(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+
+        data, bbox, _ = qr_detector.detectAndDecode(img)
+
+        if bbox is not None:
+            pts = bbox.astype(int).reshape(-1, 2)
+
+            # Draw camera-like bounding box
+            for i in range(len(pts)):
+                cv2.line(
+                    img,
+                    tuple(pts[i]),
+                    tuple(pts[(i + 1) % len(pts)]),
+                    (0, 255, 0),
+                    3
+                )
+
+            if data:
+                cv2.putText(
+                    img,
+                    "QR Detected",
+                    (pts[0][0], pts[0][1] - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (0, 255, 0),
+                    2
+                )
+
+        return frame.from_ndarray(img, format="bgr24")
 
 def depth_estimation(image):
     depth = pipe(image)["depth"]
@@ -47,10 +80,15 @@ st.title("📸 QR Capture Page")
 st.write("Point your camera at the QR code. Then click **Capture**.")
 
 # Streamlit camera input
-captured_image = st.camera_input("Camera")
+#captured_image = st.camera_input("Camera")
 #captured_image=st.file_uploader('upload image')
+webrtc_streamer(
+    key="qr-camera",
+    video_processor_factory=QRScanner,
+    media_stream_constraints={"video": True, "audio": False},
+)
 pipe= load_depthanything_model()
-if captured_image is not None:
+if QRProcessor.captured_img is not None:
     # Convert to OpenCV format
     img = Image.open(captured_image)
     img = np.array(img)
